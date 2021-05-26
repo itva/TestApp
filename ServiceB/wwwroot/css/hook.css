@@ -1,0 +1,10 @@
+﻿.p-10 {
+    padding: 10px
+}
+
+#division li {
+    font-size: 18px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    margin-top: 5px;
+    list-style-image: url("/images/e315.svg");
+}

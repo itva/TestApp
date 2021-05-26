@@ -1,0 +1,30 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+@using ServiceB.Components.Helpers
+@model IndexViewModel
+
+<div class="p-10">
+    <h3>Подразделения:</h3>
+    @using (Html.BeginForm("Filter", "Home", FormMethod.Get))
+    {
+        <input type="text" placeholder="Фильтр" name="filterVal" value="@Model.Filter" class="form-control" style="width: 50%; margin: 3px;" />
+    }
+    @{
+        bool Filter(TreeRow rec) => string.IsNullOrWhiteSpace(Model.Filter) || rec.Value.Contains(Model.Filter, StringComparison.CurrentCultureIgnoreCase);
+    }
+
+    @await Component.InvokeAsync("Tree", new { htmlId = "division", data = Model.Data, filter = (Func<TreeRow, bool>)Filter })
+
+    <hr />
+    <h3>Загрузить сведения из файла:</h3>
+    <form asp-action="Upload" asp-controller="Home" enctype="multipart/form-data" method="post" class="form-inline">
+        <div class="form-group">
+            <input type="file" id="uploadFile" name="uploadFile" class="form-control">
+            <input type="submit" value="Загрузить" class="form-control" />
+        </div>
+    </form>
+
+
+</div>
