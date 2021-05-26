@@ -44,6 +44,39 @@ namespace ServiceB.Components.Helpers
             {
                 rec.Host = _data;
             }
+
+            //а теперь, имея все связи, поищем циклические ссылки..
+
+            #region cycle
+
+            var n = data.Count();
+            foreach (var rec in data)
+            {
+                var next = rec;
+                //идея состоит в том, что при отсутствии цикла при переходе на родителя любая ветка дойдёт до "корня" (или замкнётся) максимум за n шагов, где n - число строк в data
+                for (var i = 0; i < n; i++)
+                {
+                    next.Host = data;
+                    if (next.ParentId==null) //вышли на "корень", все хорошо
+                        break;
+                    next = next.Parent;
+                    if (rec == next) //а вот это уже обнаружено кольцо
+                    {
+                        _data.Clear();
+                        _data.Add(new TreeRow()
+                        {
+                            Id = 0,
+                            ParentId = null,
+                            Text =
+                                $"Обнаружена циклическая ссылка, id {rec.Id}. Перезагрузите данные из резервного файла.",
+                            Value = "",
+                            Host = _data
+                        });
+                        return;
+                    }
+                }
+            }
+            #endregion
         }
 
 
