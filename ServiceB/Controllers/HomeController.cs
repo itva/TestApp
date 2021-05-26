@@ -31,7 +31,8 @@ namespace ServiceB.Controllers
         private readonly IConfiguration _config;
         private readonly IHostingEnvironment _environment;
 
-        
+        private readonly string _username = "qqq1#2@www.eee";
+        private readonly string _password = "12345@@%#";
 
         public HomeController(ITestDbContext dbContext, ITestFileContext fileContext, IConfiguration config, IHostingEnvironment environment)
         {
@@ -64,7 +65,7 @@ namespace ServiceB.Controllers
 
                 //запрос токена
                 var content =
-                    JsonConvert.SerializeObject(new Cred() { username = "qqq1#2@www.eee", password = "12345@@%#" });
+                    JsonConvert.SerializeObject(new Cred() { username = _username, password = _password });
                 var token = await DoPost<string>(client,
                     $"{_config.GetValue<string>("Customs:ServiceAAddr")}/api/account/token",
                     content,
@@ -197,6 +198,7 @@ namespace ServiceB.Controllers
         [HttpPost]
         public async Task<IActionResult> Upload(IFormFile uploadFile)
         {
+            //загрузить файл на диск и в базу
             if (uploadFile != null)
             {
                 var fileName = $"{_environment.WebRootPath}/Files/{DateTime.Now.Ticks}_{Path.GetRandomFileName()}";
@@ -230,6 +232,34 @@ namespace ServiceB.Controllers
                         return View("Alarm",
                             $"Непредвиденная ошибка при загрузке файла {WebUtility.HtmlEncode(uploadFile.Name)}");
                 }
+            }
+            //очистить данные на ServiceA
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(_config.GetValue<string>("Customs:ServiceAAddr"));
+
+                //запрос токена
+                var content =
+                    JsonConvert.SerializeObject(new Cred() { username = _username, password = _password });
+                var token = await DoPost<string>(client,
+                    $"{_config.GetValue<string>("Customs:ServiceAAddr")}/api/account/token",
+                    content,
+                    new List<MediaTypeWithQualityHeaderValue>()
+                    {
+                        new MediaTypeWithQualityHeaderValue("application/json")
+                    },
+                    null);
+
+                    var clear = await DoPost<Dictionary<long, bool>>(client,
+                        $"{_config.GetValue<string>("Customs:ServiceAAddr")}/api/status/UploadNewData",
+                        JsonConvert.SerializeObject(new List<long>()),
+                        new List<MediaTypeWithQualityHeaderValue>()
+                        {
+                            new MediaTypeWithQualityHeaderValue("application/json")
+                        },
+                        new List<(string key, string value)>() { ("Authorization", "Bearer " + token) }
+                    );
+                
             }
 
             return RedirectToAction("Index");
